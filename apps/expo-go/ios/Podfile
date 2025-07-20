@@ -21,8 +21,6 @@ target 'Expo Go' do
   pod 'CocoaLumberjack', '~> 3.5.3'
   pod 'MBProgressHUD', '~> 1.2.0'
 
-  # transitive dependency of React-Core and we use it to get the `RCTInspectorPackagerConnection` state
-  pod 'SocketRocket'
 
   # Required by react-native-maps
   # See https://github.com/react-native-maps/react-native-maps/blob/master/docs/installation.md
@@ -83,9 +81,6 @@ target 'Expo Go' do
     :path => react_native_path,
     :hermes_enabled => true,
   )
-  setup_jsc!(
-    :react_native_path => react_native_path,
-  )
 
   post_install do |installer|
     # `installer.pods_project` might be nil for `incremental_installation: true` and no new project generated
@@ -103,6 +98,14 @@ target 'Expo Go' do
 
     installer.target_installation_results.pod_target_installation_results
       .each do |pod_name, target_installation_result|
+
+      # Fix for DEFINES_MODULE conflict between React-jsc and Fabric
+      if ['React-jsc', 'Fabric'].include?(pod_name)
+        target_installation_result.native_target.build_configurations.each do |config|
+          config.build_settings['DEFINES_MODULE'] = 'YES'
+        end
+      end
+
 
       # Enable hermes debugger even on release builds
       if ['React-hermes', 'hermes-engine', 'React-RuntimeHermes'].include?(pod_name)

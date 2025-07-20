@@ -13,6 +13,7 @@
 
 To build Expo Go for development of it, follow the instructions in the [section below](#configuring-your-environment).
 
+
 ## External Contributions
 
 If you want to contribute to the Expo SDK, use the [Bare Expo app](https://github.com/expo/expo/tree/main/apps/bare-expo) for developing and testing your changes (unless your changes are specific to the Expo Go app).
