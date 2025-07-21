@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "expo-home",
+    "name": "Qlur",
     "description": "",
     "owner": "expo-home-dev",
     "slug": "home",
@@ -21,11 +21,11 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "host.exp.exponent"
+      "bundleIdentifier": "com.qlur.vibecode.ai.appmaker"
     },
     "newArchEnabled": true,
     "android": {
-      "package": "host.exp.exponent"
+      "package": "com.qlur.vibecode.ai.appmaker"
     },
     "androidStatusBar": {
       "barStyle": "dark-content"
