@@ -128,6 +128,27 @@ target 'Expo Go' do
           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/Headers/Public/StripePayments"'
         end
       end
+      
+      # Fix for react-native-slider C++ compilation issues
+      if pod_name == 'react-native-slider'
+        target_installation_result.native_target.build_configurations.each do |config|
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_NO_CONFIG=1'
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_MOBILE=1'
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_USE_LIBCPP=1'
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_HAVE_PTHREAD=1'
+          
+          # Add header search paths for Folly
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/RCT-Folly"'
+          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/Headers/Private/RCT-Folly"'
+          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/boost"'
+          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/DoubleConversion"'
+          
+          # Disable coroutines
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_CFG_NO_COROUTINES=1'
+        end
+      end
 
       if pod_name.end_with?('EXUpdates')
         target_installation_result.native_target.build_configurations.each do |config|
@@ -163,3 +184,5 @@ target 'Expo Go' do
     pod 'ExpoModulesTestCore', :path => "../../../packages/expo-modules-test-core/ios"
   end
 end
+
+
