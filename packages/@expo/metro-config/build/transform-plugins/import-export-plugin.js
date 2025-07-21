@@ -141,8 +141,8 @@ function importExportPlugin({ types: t }) {
                                     {
                                         const properties = d.id.properties;
                                         properties.forEach((p) => {
-                                            // @ts-expect-error Property 'key' does not exist on type 'RestElement'
-                                            const name = p.key.name;
+                                            // @ts-expect-error Property 'name' does not exist on type 'ArrayExpression'.
+                                            const name = 'value' in p ? p.value.name : p.argument.name;
                                             state.exportNamed.push({ local: name, remote: name, loc });
                                         });
                                     }
@@ -151,8 +151,8 @@ function importExportPlugin({ types: t }) {
                                     {
                                         const elements = d.id.elements;
                                         elements.forEach((e) => {
-                                            // @ts-expect-error Property 'name' does not exist on type 'ArrayPattern'.
-                                            const name = e.name;
+                                            // @ts-expect-error Property 'name' does not exist on type 'ArrayExpression'.
+                                            const name = 'argument' in e ? e.argument.name : e.name;
                                             state.exportNamed.push({ local: name, remote: name, loc });
                                         });
                                     }
@@ -184,8 +184,12 @@ function importExportPlugin({ types: t }) {
                 if (specifiers) {
                     specifiers.forEach((s) => {
                         // @ts-expect-error Property 'local' does not exist on type 'ExportDefaultSpecifier'
-                        const local = s.local;
+                        let local = s.local;
                         const remote = s.exported;
+                        // export * as b from 'a'
+                        if (!local && s.type === 'ExportNamespaceSpecifier') {
+                            local = s.exported;
+                        }
                         if (remote.type === 'StringLiteral') {
                             // https://babeljs.io/docs/en/babel-plugin-syntax-module-string-names
                             throw path.buildCodeFrameError('Module string names are not supported');
@@ -211,6 +215,18 @@ function importExportPlugin({ types: t }) {
                                     REMOTE: local,
                                 }), loc));
                                 state.exportDefault.push({ local: temp.name, loc });
+                            }
+                            else if (s.type === 'ExportNamespaceSpecifier') {
+                                path.insertBefore(withLocation(importTemplate({
+                                    IMPORT: t.cloneNode(state.importAll),
+                                    FILE: resolvePath(t.cloneNode(nullthrows(path.node.source)), state.opts.resolve),
+                                    LOCAL: temp,
+                                }), loc));
+                                state.exportNamed.push({
+                                    local: temp.name,
+                                    remote: remote.name,
+                                    loc,
+                                });
                             }
                             else {
                                 path.insertBefore(withLocation(importNamedTemplate({
