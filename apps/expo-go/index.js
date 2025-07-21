@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { registerRootComponent } from 'expo';
 
 import App from './App';
