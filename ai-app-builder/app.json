@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "AI App Builder",
+    "slug": "ai-app-builder",
+    "version": "1.0.0",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "bundleIdentifier": "com.aiappbuilder.dev"
+    },
+    "android": {
+      "package": "com.aiappbuilder.dev"
+    }
+  }
+}

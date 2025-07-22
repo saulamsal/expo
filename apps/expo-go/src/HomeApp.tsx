@@ -103,12 +103,11 @@ export default function HomeApp() {
         dispatch(SessionActions.setSession(storedSession));
       }
 
-      const [currentUserQueryResult, persistedCurrentAccount] = await Promise.all([
-        ApolloClient.query<Home_CurrentUserActorQuery, Home_CurrentUserActorQueryVariables>({
-          query: Home_CurrentUserActorDocument,
-          context: { headers: { 'expo-session': storedSession?.sessionSecret } },
-        }),
-        AsyncStorage.getItem('currentAccount'),
+      let currentUserQueryResult;
+      let persistedCurrentAccount;
+
+      // Load fonts first (these should not fail)
+      await Promise.all([
         Font.loadAsync(Ionicons.font),
         Platform.OS === 'android'
           ? Font.loadAsync(MaterialIcons.font)
@@ -135,7 +134,24 @@ export default function HomeApp() {
         }),
       ]);
 
-      if (currentUserQueryResult.data && currentUserQueryResult.data.meUserActor) {
+      // Try to get persisted account
+      try {
+        persistedCurrentAccount = await AsyncStorage.getItem('currentAccount');
+      } catch (e) {
+        console.warn('Failed to get persisted account:', e);
+      }
+
+      // Try to query current user, but don't fail if network is unavailable
+      try {
+        currentUserQueryResult = await ApolloClient.query<Home_CurrentUserActorQuery, Home_CurrentUserActorQueryVariables>({
+          query: Home_CurrentUserActorDocument,
+          context: { headers: { 'expo-session': storedSession?.sessionSecret } },
+        });
+      } catch (e) {
+        console.warn('Failed to query current user (this is expected in local development):', e);
+      }
+
+      if (currentUserQueryResult?.data && currentUserQueryResult.data.meUserActor) {
         let firstLoadAccountName = persistedCurrentAccount;
         if (firstLoadAccountName) {
           // if there was a persisted account, and it matches the accounts available to the current user, use it
@@ -161,19 +177,23 @@ export default function HomeApp() {
         setCurrentUserData(currentUserQueryResult.data);
 
         if (firstLoadAccountName) {
-          const homeScreenData = await ApolloClient.query<
-            HomeScreenDataQuery,
-            HomeScreenDataQueryVariables
-          >({
-            query: HomeScreenDataDocument,
-            variables: {
-              accountName: firstLoadAccountName,
-              platform: Platform.OS === 'ios' ? AppPlatform.Ios : AppPlatform.Android,
-            },
-            context: { headers: { 'expo-session': storedSession?.sessionSecret } },
-          });
+          try {
+            const homeScreenData = await ApolloClient.query<
+              HomeScreenDataQuery,
+              HomeScreenDataQueryVariables
+            >({
+              query: HomeScreenDataDocument,
+              variables: {
+                accountName: firstLoadAccountName,
+                platform: Platform.OS === 'ios' ? AppPlatform.Ios : AppPlatform.Android,
+              },
+              context: { headers: { 'expo-session': storedSession?.sessionSecret } },
+            });
 
-          setHomeScreenData(homeScreenData.data);
+            setHomeScreenData(homeScreenData.data);
+          } catch (e) {
+            console.warn('Failed to query home screen data (this is expected in local development):', e);
+          }
         }
       } else {
         // if there is no current user data, clear the accountName

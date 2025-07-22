@@ -28,8 +28,8 @@ final class HomeAppLoader: AppLoader {
     completionQueue: DispatchQueue
   ) {
     self.manifestAndAssetRequestHeaders = manifestAndAssetRequestHeaders
-    self.downloader = FileDownloader(config: config, logger: logger)
     self.completionQueue = completionQueue
+    self.downloader = FileDownloader(config: config, logger: logger)
     super.init(config: config, logger: logger, database: database, directory: directory, launchedUpdate: launchedUpdate, completionQueue: completionQueue)
   }
 
@@ -93,16 +93,18 @@ final class HomeAppLoader: AppLoader {
           fromURL: assetUrl,
           verifyingHash: asset.expectedHash,
           toPath: urlOnDisk.path,
-          extraHeaders: extraHeaders.merging(asset.extraRequestHeaders ?? [:]) { current, _ in current }
-        ) { data, response, _ in
-          DispatchQueue.global().async {
-            self.handleAssetDownload(withData: data, response: response, asset: asset)
+          extraHeaders: extraHeaders.merging(asset.extraRequestHeaders ?? [:]) { current, _ in current },
+          successBlock: { data, response, _ in
+            DispatchQueue.global().async {
+              self.handleAssetDownload(withData: data, response: response, asset: asset)
+            }
+          },
+          errorBlock: { error in
+            DispatchQueue.global().async {
+              self.handleAssetDownload(withError: error, asset: asset)
+            }
           }
-        } errorBlock: { error in
-          DispatchQueue.global().async {
-            self.handleAssetDownload(withError: error, asset: asset)
-          }
-        }
+        )
       }
     }
   }

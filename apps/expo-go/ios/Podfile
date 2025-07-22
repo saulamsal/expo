@@ -28,17 +28,8 @@ target 'Expo Go' do
   # See https://github.com/react-native-maps/react-native-maps/blob/master/docs/installation.md
   pod 'react-native-google-maps', :path => '../../../node_modules/react-native-maps'
 
-  # Required by firebase core versions 9.x / 10.x (included with SDK 47)
-  # See https://github.com/invertase/react-native-firebase/issues/6332#issuecomment-1189734581
-  pod 'FirebaseCore', :modular_headers => true
-  pod 'FirebaseCrashlytics', :modular_headers => true
-  pod 'FirebaseAnalytics', :modular_headers => true
-  pod 'GoogleUtilities', :modular_headers => true
+  # Firebase dependencies removed for white-label build
 
-  pod 'FirebaseInstallations', :modular_headers => true
-  pod 'GoogleDataTransport', :modular_headers => true
-  pod 'nanopb', :modular_headers => true
-  pod 'FirebaseCoreExtension', :modular_headers => true
 
   # Expo modules
   use_expo_modules!({
@@ -95,6 +86,19 @@ target 'Expo Go' do
         react_native_path,
         :mac_catalyst_enabled => false
       )
+    end
+    
+    # Fix for Hermes CMake build error with multiple architectures
+    installer.pods_project.targets.each do |target|
+      if target.name == "hermes-engine"
+        target.build_configurations.each do |config|
+          config.build_settings["ONLY_ACTIVE_ARCH"] = "YES"
+          config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "i386"
+          # Ensure proper architecture handling
+          config.build_settings.delete("ARCHS")
+          config.build_settings["VALID_ARCHS"] = "arm64 x86_64"
+        end
+      end
     end
 
     # Disabled as of CocoaPods 1.8.0.beta1 since pods_project seems to be nil
