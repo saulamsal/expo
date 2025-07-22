@@ -9,6 +9,14 @@
     },
     "android": {
       "package": "com.aiappbuilder.dev"
-    }
+    },
+    "plugins": [
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "launcher"
+        }
+      ]
+    ]
   }
 }
